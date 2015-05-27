@@ -1,3 +1,7 @@
+# This code is transformed from libsvm. If it is used in any publications, please cite the related papers to libsvm
+# For function calls, you should first train a SVM classifier, then get the decision values and call 'sigmoid_train'.
+# After getting the optimal A and B, you should use sigmoid_predict to generate the probability, array input is accepted.
+
 import numpy as np
 import random
 from sklearn import svm
@@ -134,4 +138,3 @@ def sigmoid_predict(decision_value, A, B):
             result[i] = 1.0 / (1 + np.exp(fApB[i]));
         result[i] = np.min(np.max(result[i],1e-7), 1-1e-7)
     return result;
-
