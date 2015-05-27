@@ -1,12 +1,14 @@
 # This code is transformed from libsvm. If it is used in any publications, please cite the related papers to libsvm
-# For function calls, you should first train a SVM classifier, then get the decision values and call 'sigmoid_train'.
-# After getting the optimal A and B, you should use sigmoid_predict to generate the probability, array input is accepted.
+# For function calls, you should first call 'svm_binary_svc_probability', then get the optimal A and B.
+# After that, you should use sigmoid_predict to generate the probability for decision values, array input is accepted.
+# An example :
+#   lin_clf = svm.LinearSVC(C=1.0);
+#   lin_clf.fit(X,Y);
+#   A, B = svm_binary_svc_probability(X, Y, C);
+#   // probs[0] is for negative probs[1] is for positive
+#   probs = sigmoid_predict(lin_clf.decision_function(X), params[0], params[1]);
 
-import numpy as np
-import random
-from sklearn import svm
-
-def svm_binary_svc_probability(X, Y):
+def svm_binary_svc_probability(X, Y, C):
     allp = np.sum(Y>0);
     alln = len(Y) - allp;
     nr_fold = 5;
@@ -18,7 +20,7 @@ def svm_binary_svc_probability(X, Y):
         end   = (i+1) * len(Y) / nr_fold;
         trainL = [perm[j] for j in range(len(Y)) if j not in range(start, end)];
         testL  = perm[start:end];
-        trainX = X[trainL,:][:,trainL];
+        trainX = X[trainL,:];
         trainY = Y[trainL];
         p_count = np.sum(trainY>0);
         n_count = len(trainY) - p_count;
@@ -29,9 +31,9 @@ def svm_binary_svc_probability(X, Y):
         elif p_count == 0 and n_count > 0:
             dec_values[start:end] = -1.0;
         else :
-            subclf = svm.SVC(kernel = 'precomputed', C=1.0, class_weight={1:allp,-1:alln});
+            subclf = svm.LinearSVC(C=C, class_weight={1:allp,-1:alln});
             subclf.fit(trainX, trainY);
-            dec_values[testL] = subclf.decision_function(X[testL,:][:,trainL]).ravel();
+            dec_values[testL] = subclf.decision_function(X[testL,:]).ravel();
     return sigmoid_train(dec_values, Y);
     
 def sigmoid_train(dec_values, Y):
