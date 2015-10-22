@@ -1,4 +1,5 @@
-# This code is transformed from libsvm. If it is used in any publications, please cite the related papers to libsvm
+# This code is transformed from libsvm. If it is used in any publications, please cite this paper :
+# "Probabilistic Outputs for Support Vector Machines and Comparisons to Regularized Likelihood Methods"
 # For function calls, you should first call 'svm_binary_svc_probability', then get the optimal A and B.
 # After that, you should use sigmoid_predict to generate the probability for decision values, array input is accepted.
 # Notice in this code, the positive label is 1 and the negative label is -1.
