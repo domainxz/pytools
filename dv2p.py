@@ -8,18 +8,22 @@
 #   lin_clf.fit(X,Y);
 #   A, B = svm_binary_svc_probability(X, Y, C);
 #   // probs[0] is for negative probs[1] is for positive
-#   probs = sigmoid_predict(lin_clf.decision_function(X), params[0], params[1]);
+#   probs = sigmoid_predict(lin_clf.decision_function(X), A, B);
+
+import numpy as np
+import random
+from sklearn.svm import LinearSVC
 
 def svm_binary_svc_probability(X, Y, C):
     allp = np.sum(Y>0);
     alln = len(Y) - allp;
     nr_fold = 5;
-    perm = range(len(Y));
+    perm = list(range(len(Y)));
     random.shuffle(perm);
     dec_values = np.zeros(len(Y), dtype=np.float32);
     for i in range(nr_fold):
-        start = i * len(Y) / nr_fold;
-        end   = (i+1) * len(Y) / nr_fold;
+        start = i * len(Y) // nr_fold;
+        end   = (i+1) * len(Y) // nr_fold;
         trainL = [perm[j] for j in range(len(Y)) if j not in range(start, end)];
         testL  = perm[start:end];
         trainX = X[trainL,:];
@@ -33,7 +37,7 @@ def svm_binary_svc_probability(X, Y, C):
         elif p_count == 0 and n_count > 0:
             dec_values[start:end] = -1.0;
         else :
-            subclf = svm.LinearSVC(C=C, class_weight={1:allp,-1:alln});
+            subclf = LinearSVC(C=C, class_weight={1:allp,-1:alln});
             subclf.fit(trainX, trainY);
             dec_values[testL] = subclf.decision_function(X[testL,:]).ravel();
     return sigmoid_train(dec_values, Y);
@@ -123,22 +127,22 @@ def sigmoid_train(dec_values, Y):
                 stepsize = stepsize / 2.0;
 
         if stepsize < min_step :
-            print "Line search fails in two-class probability estimates\n";
+            print ("Line search fails in two-class probability estimates");
             break;
 
     if liter >= max_iter :
-        print "Reaching maximal iterations in two-class probability estimates\n";
+        print ("Reaching maximal iterations in two-class probability estimates");
     
     return A, B;
 
 def sigmoid_predict(decision_value, A, B):
     fApB = decision_value*A + B;
-    result = np.zeros(len(fApB),dtype=np.float32);
+    result = np.zeros(len(fApB), dtype=np.float32);
     # 1-p used later; avoid catastrophic cancellation
     for i in range(len(fApB)):
         if fApB[i] >= 0 :
             result[i] = np.exp(-fApB[i]) / (1.0 + np.exp(-fApB[i]));
         else :
             result[i] = 1.0 / (1 + np.exp(fApB[i]));
-        result[i] = np.min(np.max(result[i],1e-7), 1-1e-7)
+        result[i] = min(max(result[i], 1e-7), 1-(1e-7));
     return result;
